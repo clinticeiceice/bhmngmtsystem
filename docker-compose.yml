@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+
+  app:
+    build:
+        context: .
+        args:
+            uid: 1000
+    container_name: bhouse-app
+    environment:
+        - APACHE_RUN_USER=#1000
+        - APACHE_RUN_GROUP=#1000
+    volumes:
+        - .:/var/www/html
+    ports:
+        - 8000:80
+    networks:
+        - bhouse
+  
+  db:
+    image: 'mysql:8.0'
+    container_name: bhouse-db
+    ports:
+        - '3306:3306'
+    restart: always
+    platform: linux/x86_64
+    environment:
+        MYSQL_ROOT_PASSWORD: 'secret'
+        MYSQL_ROOT_HOST: '%'
+        MYSQL_DATABASE: 'bhouse'
+        MYSQL_USER: 'root'
+        MYSQL_PASSWORD: 'secret'
+        MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    volumes:
+        - 'bhouse-db-mysql:/var/lib/mysql'
+    networks:
+      - bhouse
+  
+  phpmyadmin:
+    container_name: bhouse-phpmyadmin
+    platform: linux/x86_64
+    image: phpmyadmin/phpmyadmin
+    environment:
+        - PMA_ARBITRARY=1
+        - PMA_HOST=db
+        - PMA_USER=root
+        - PMA_PASSWORD=secret
+    ports:
+        - 8033:80
+    depends_on:
+        - db
+    networks:
+        - bhouse
+
+networks:
+  bhouse:
+    driver: bridge
+volumes:
+    bhouse-db-mysql:
+        driver: local
